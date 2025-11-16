@@ -58,7 +58,7 @@ A full-stack web application for managing recipes and planning weekly meals base
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/hayyo-o/meal-planner.git
 cd BakPraceCode
 ```
 
@@ -281,10 +281,10 @@ npm run test:coverage
 
 ## License
 
-ISC
+MIT
 
 ## Author
 
-Pavel Liapin.
+Pavel Liapin
 
 
