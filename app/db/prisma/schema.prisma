@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../api/node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+
+  meals MealPlan[]
+  recipes Recipe[]
+
+  @@map("users")
+}
+
+model Recipe {
+  id                  String   @id @default(uuid())
+  ownerId             String
+  title               String
+  description         String
+  ingredients         Json     // Array of {name, quantity, unit, note?}
+  steps               Json     // Array of strings
+  imageUrl            String?
+  tags                String[] // PostgreSQL array
+  category            String
+  servings            Int
+  cookTimeMin         Int
+  kcalPerServing      Int
+  proteinPerServing   Decimal  @db.Decimal(5, 2)
+  fatPerServing       Decimal  @db.Decimal(5, 2)
+  carbsPerServing     Decimal  @db.Decimal(5, 2)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  owner     User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  mealEntries MealEntry[]
+
+  @@index([title])
+  @@index([category])
+  @@index([kcalPerServing])
+  @@index([proteinPerServing])
+  @@index([cookTimeMin])
+  @@index([tags])
+  @@map("recipes")
+}
+
+model MealPlan {
+  id           String   @id @default(uuid())
+  userId       String
+  weekStart    DateTime @db.Date
+  goalsKcal    Int
+  goalsProtein Decimal  @db.Decimal(8, 2)
+  goalsFat     Decimal  @db.Decimal(8, 2)
+  goalsCarbs   Decimal  @db.Decimal(8, 2)
+  mealsPerDay  Int
+  createdAt    DateTime @default(now())
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries  MealEntry[]
+  shoppingItems ShoppingItem[]
+
+  @@unique([userId, weekStart])
+  @@index([userId])
+  @@map("meal_plans")
+}
+
+model MealEntry {
+  id            String   @id @default(uuid())
+  mealPlanId    String
+  date          DateTime @db.Date
+  slot          String   // Enum: breakfast, lunch, dinner, snack1, snack2, snack3
+  recipeId      String
+  servingsCount Decimal  @db.Decimal(3, 1)
+
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([mealPlanId, date, slot])
+  @@index([mealPlanId])
+  @@index([recipeId])
+  @@index([date])
+  @@map("meal_entries")
+}
+
+model ShoppingItem {
+  id              String   @id @default(uuid())
+  mealPlanId      String
+  name            String
+  unit            String
+  quantityDecimal Decimal  @db.Decimal(10, 2)
+
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  @@index([mealPlanId])
+  @@map("shopping_items")
+}
+
+
